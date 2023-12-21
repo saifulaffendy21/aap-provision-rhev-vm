@@ -19,48 +19,5 @@
         msg: "{{ ovirt_auth }}"
 
 
-  # Check if the VM already exists
-    - name: Check if the VM exists
-      ovirt_vm_info:
-          auth: "{{ ovirt_auth }}"
-          pattern: name= "{{ vm_name }}*"
-      register: result
-
-    - name: get info
-      debug:
-        msg: "{{ result }}"
-
-    - name: Creates a new Virtual Machine
-      ovirt.ovirt.ovirt_vm:
-        state: present
-        name: "{{vm_name}}"
-        template: Sai1
-        cluster: Default
-        auth: "{{ ovirt_auth }}"
-
-    - name: waiting for vm to create add some delays
-      pause:
-        seconds: 10
-
- # Power on the VM
-    - name: Boot VM if the hosting hypervisor is defined
-      ovirt_vm:
-        auth: "{{ ovirt_auth }}"
-        name: "{{ vm_name }}"
-        state: running
-    - name: Verify the VM is UP
-      ovirt_vm_info:
-        auth: "{{ ovirt_auth }}"
-        pattern: name= "{{ vm_name }}"
-      register: result
-      until: result.ovirt_vms[0]['status'] == "up"
-      retries: 10000
-
-
-    - name: Always revoke the SSO token
-      ovirt_auth:
-        state: absent
-        ovirt_auth: "{{ ovirt_auth }}"
-
   collections:
     - ovirt.ovirt
