@@ -1,0 +1,80 @@
+---
+- name: Deploy VM in RHEV
+  hosts: localhost
+  gather_facts: false
+  connection: local
+  collections:
+    - ovirt.ovirt
+  vars:
+    # ansible_python_interpreter: /usr/bin/python3
+    # vm_name: mustafa_ansible_test2
+    # rhev_url: "https://rhvm.wikilabs.local/ovirt-engine/api"
+    # rhev_username: "ansibletest@internal"
+    # rhev_password: "Wiki@2051"
+    # vm_template: Sai1
+    vm_cluster: Default
+    max_retries: 30
+    retry_delay: 10
+
+  tasks:
+    - name: Log in to RHEV/oVirt
+      ovirt.ovirt.ovirt_auth:
+        url: "{{ rhev_url }}"
+        username: "{{ rhev_username }}"
+        password: "{{ rhev_password }}"
+      register: ovirt_auth
+
+    - name: Debug authentication token
+      ansible.builtin.debug:
+        msg: "Authentication token: {{ ovirt_auth }}"
+
+    - name: Check if the VM already exists
+      ovirt.ovirt.ovirt_vm_info:
+        auth: "{{ ovirt_auth }}"
+        pattern: "name={{ vm_name }}"
+      register: vm_info
+
+    - name: Debug VM info
+      ansible.builtin.debug:
+        msg: "VM Info: {{ vm_info }}"
+
+    - name: Create a new VM if it doesn't exist
+      ovirt.ovirt.ovirt_vm:
+        auth: "{{ ovirt_auth }}"
+        name: "{{ vm_name }}"
+        template: "{{ vm_template }}"
+        cluster: "{{ vm_cluster }}"
+        state: present
+      when: vm_info.ovirt_vms | length == 0
+
+    - name: Wait for VM to be created (if applicable)
+      ansible.builtin.pause:
+        seconds: "{{ retry_delay }}"
+      when: vm_info.ovirt_vms | length == 0
+
+    - name: Power on the VM
+      ovirt.ovirt.ovirt_vm:
+        auth: "{{ ovirt_auth }}"
+        name: "{{ vm_name }}"
+        state: running
+      when: vm_info.ovirt_vms | length > 0
+
+    - name: Verify the VM is UP
+      ovirt.ovirt.ovirt_vm_info:
+        auth: "{{ ovirt_auth }}"
+        pattern: "name={{ vm_name }}"
+      register: vm_status
+      until: vm_status.ovirt_vms[0].status == "up"
+      retries: "{{ max_retries }}"
+      delay: "{{ retry_delay }}"
+      ignore_errors: true
+
+    - name: Debug VM status
+      ansible.builtin.debug:
+        msg: "VM Status: {{ vm_status }}"
+
+    - name: Always revoke the SSO token
+      ovirt.ovirt.ovirt_auth:
+        state: absent
+        ovirt_auth: "{{ ovirt_auth }}"
+ 
