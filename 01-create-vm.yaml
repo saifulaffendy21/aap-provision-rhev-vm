@@ -3,8 +3,6 @@
   hosts: localhost
   gather_facts: false
   connection: local
-  collections:
-    - ovirt.ovirt
   vars:
     # ansible_python_interpreter: /usr/bin/python3
     # vm_name: mustafa_ansible_test2
