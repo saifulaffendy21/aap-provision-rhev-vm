@@ -15,64 +15,71 @@
     retry_delay: 10
 
   tasks:
-    - name: Log in to RHEV/oVirt
-      ovirt_auth:
-        url: "{{ rhev_url }}"
-        username: "{{ rhev_username }}"
-        password: "{{ rhev_password }}"
-      register: ovirt_auth
+    - block:
+        - name: Log in to RHEV/oVirt
+          ovirt_auth:
+            url: "{{ rhev_url }}"
+            username: "{{ rhev_username }}"
+            password: "{{ rhev_password }}"
+          register: ovirt_auth
 
-    - name: Debug authentication token
-      debug:
-        msg: "Authentication token: {{ ovirt_auth }}"
+        - name: Debug authentication token
+          debug:
+            msg: "Authentication token: {{ ovirt_auth }}"
 
-    - name: Check if the VM already exists
-      ovirt_vm_info:
-        auth: "{{ ovirt_auth }}"
-        pattern: name= "{{ vm_name }}"
-      register: vm_info
+        - name: Check if the VM already exists
+          ovirt_vm_info:
+            auth: "{{ ovirt_auth }}"
+            pattern: name= "{{ vm_name }}"
+          register: vm_info
 
-    - name: Debug VM info
-      debug:
-        msg: "VM Info: {{ vm_info }}"
+        - name: Debug VM info
+          debug:
+            msg: "VM Info: {{ vm_info }}"
 
-    - name: Create a new VM if it doesn't exist
-      ovirt_vm:
-        auth: "{{ ovirt_auth }}"
-        name: "{{ vm_name }}"
-        template: "{{ vm_template }}"
-        cluster: "{{ vm_cluster }}"
-        state: present
-      when: vm_info.ovirt_vms | length == 0
+        - name: Create a new VM if it doesn't exist
+          ovirt_vm:
+            auth: "{{ ovirt_auth }}"
+            name: "{{ vm_name }}"
+            template: "{{ vm_template }}"
+            cluster: "{{ vm_cluster }}"
+            state: present
+          when: vm_info.ovirt_vms | length == 0
 
-    - name: Wait for VM to be created (if applicable)
-      pause:
-        seconds: "{{ retry_delay }}"
-      when: vm_info.ovirt_vms | length == 0
+        - name: Wait for VM to be created (if applicable)
+          pause:
+            seconds: "{{ retry_delay }}"
+          when: vm_info.ovirt_vms | length == 0
 
-    - name: Power on the VM
-      ovirt_vm:
-        auth: "{{ ovirt_auth }}"
-        name: "{{ vm_name }}"
-        state: running
-      when: vm_info.ovirt_vms | length > 0
+        - name: Power on the VM
+          ovirt_vm:
+            auth: "{{ ovirt_auth }}"
+            name: "{{ vm_name }}"
+            state: running
+          when: vm_info.ovirt_vms | length > 0
 
-    - name: Verify the VM is UP
-      ovirt_vm_info:
-        auth: "{{ ovirt_auth }}"
-        pattern: "name={{ vm_name }}"
-      register: vm_status
-      until: vm_status.ovirt_vms[0].status == "up"
-      retries: "{{ max_retries }}"
-      delay: "{{ retry_delay }}"
-      ignore_errors: true
+        - name: Verify the VM is UP
+          ovirt_vm_info:
+            auth: "{{ ovirt_auth }}"
+            pattern: "name={{ vm_name }}"
+          register: vm_status
+          until: vm_status.ovirt_vms[0].status == "up"
+          retries: "{{ max_retries }}"
+          delay: "{{ retry_delay }}"
+          ignore_errors: true
 
-    - name: Debug VM status
-      debug:
-        msg: "VM Status: {{ vm_status }}"
+        - name: Debug VM status
+          debug:
+            msg: "VM Status: {{ vm_status }}"
 
-  always:
-    - name: Always revoke the SSO token
-      ovirt_auth:
-        state: absent
-        ovirt_auth: "{{ ovirt_auth }}"
+      rescue:
+        - name: Handle errors during VM deployment
+          debug:
+            msg: "An error occurred during VM deployment."
+
+      always:
+        - name: Always revoke the SSO token
+          ovirt_auth:
+            state: absent
+            ovirt_auth: "{{ ovirt_auth }}"
+          when: ovirt_auth is defined
