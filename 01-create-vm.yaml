@@ -15,7 +15,8 @@
     retry_delay: 10
 
   tasks:
-    - block:
+    - name: Opening RHEV Session
+      block:
         - name: Log in to RHEV/oVirt
           ovirt_auth:
             url: "{{ rhev_url }}"
@@ -25,11 +26,11 @@
 
         - name: Debug authentication token
           debug:
-            msg: "Authentication token: {{ ovirt_auth }}"
+            msg: "Authentication token: {{ ovirt_auth.ansible_facts.ovirt_auth }}"
 
         - name: Check if the VM already exists
           ovirt_vm_info:
-            auth: "{{ ovirt_auth }}"
+            auth: "{{ ovirt_auth.ansible_facts.ovirt_auth }}"
             pattern: name= "{{ vm_name }}"
           register: vm_info
 
@@ -39,7 +40,7 @@
 
         - name: Create a new VM if it doesn't exist
           ovirt_vm:
-            auth: "{{ ovirt_auth }}"
+            auth: "{{ ovirt_auth.ansible_facts.ovirt_auth }}"
             name: "{{ vm_name }}"
             template: "{{ vm_template }}"
             cluster: "{{ vm_cluster }}"
@@ -53,14 +54,14 @@
 
         - name: Power on the VM
           ovirt_vm:
-            auth: "{{ ovirt_auth }}"
+            auth: "{{ ovirt_auth.ansible_facts.ovirt_auth }}"
             name: "{{ vm_name }}"
             state: running
           when: vm_info.ovirt_vms | length > 0
 
         - name: Verify the VM is UP
           ovirt_vm_info:
-            auth: "{{ ovirt_auth }}"
+            auth: "{{ ovirt_auth.ansible_facts.ovirt_auth }}"
             pattern: "name={{ vm_name }}"
           register: vm_status
           until: vm_status.ovirt_vms[0].status == "up"
@@ -81,5 +82,5 @@
         - name: Always revoke the SSO token
           ovirt_auth:
             state: absent
-            ovirt_auth: "{{ ovirt_auth }}"
+            ovirt_auth: "{{ ovirt_auth.ansible_facts.ovirt_auth }}"
           when: ovirt_auth is defined
