@@ -29,7 +29,7 @@
     - name: Check if the VM already exists
       ovirt.ovirt.ovirt_vm_info:
         auth: "{{ ovirt_auth }}"
-        pattern: name="{{ vm_name }}"
+        pattern: name= "{{ vm_name }}"
       register: vm_info
 
     - name: Debug VM info
