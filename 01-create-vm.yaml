@@ -75,4 +75,4 @@
       ovirt.ovirt.ovirt_auth:
         state: absent
         ovirt_auth: "{{ ovirt_auth }}"
- 
+
