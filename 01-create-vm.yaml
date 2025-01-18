@@ -16,28 +16,28 @@
 
   tasks:
     - name: Log in to RHEV/oVirt
-      ovirt.ovirt.ovirt_auth:
+      ovirt_auth:
         url: "{{ rhev_url }}"
         username: "{{ rhev_username }}"
         password: "{{ rhev_password }}"
       register: ovirt_auth
 
     - name: Debug authentication token
-      ansible.builtin.debug:
+      debug:
         msg: "Authentication token: {{ ovirt_auth }}"
 
     - name: Check if the VM already exists
-      ovirt.ovirt.ovirt_vm_info:
+      ovirt_vm_info:
         auth: "{{ ovirt_auth }}"
         pattern: name= "{{ vm_name }}"
       register: vm_info
 
     - name: Debug VM info
-      ansible.builtin.debug:
+      debug:
         msg: "VM Info: {{ vm_info }}"
 
     - name: Create a new VM if it doesn't exist
-      ovirt.ovirt.ovirt_vm:
+      ovirt_vm:
         auth: "{{ ovirt_auth }}"
         name: "{{ vm_name }}"
         template: "{{ vm_template }}"
@@ -46,19 +46,19 @@
       when: vm_info.ovirt_vms | length == 0
 
     - name: Wait for VM to be created (if applicable)
-      ansible.builtin.pause:
+      pause:
         seconds: "{{ retry_delay }}"
       when: vm_info.ovirt_vms | length == 0
 
     - name: Power on the VM
-      ovirt.ovirt.ovirt_vm:
+      ovirt_vm:
         auth: "{{ ovirt_auth }}"
         name: "{{ vm_name }}"
         state: running
       when: vm_info.ovirt_vms | length > 0
 
     - name: Verify the VM is UP
-      ovirt.ovirt.ovirt_vm_info:
+      ovirt_vm_info:
         auth: "{{ ovirt_auth }}"
         pattern: "name={{ vm_name }}"
       register: vm_status
@@ -68,11 +68,11 @@
       ignore_errors: true
 
     - name: Debug VM status
-      ansible.builtin.debug:
+      debug:
         msg: "VM Status: {{ vm_status }}"
 
     - name: Always revoke the SSO token
-      ovirt.ovirt.ovirt_auth:
+      ovirt_auth:
         state: absent
         ovirt_auth: "{{ ovirt_auth }}"
 
