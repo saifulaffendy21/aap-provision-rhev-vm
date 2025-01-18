@@ -5,12 +5,12 @@
   connection: local
   vars:
     ansible_python_interpreter: /usr/bin/python3
-    vm_name: mustafa_ansible_test2
-    rhev_url: "https://rhvm.wikilabs.local/ovirt-engine/api"
-    rhev_username: "ansibletest@internal"
-    rhev_password: "Wiki@2051"
-    vm_template: Sai1
-    vm_cluster: Default
+    # vm_name: mustafa_ansible_test2
+    # rhev_url: "https://rhvm.wikilabs.local/ovirt-engine/api"
+    # rhev_username: "ansibletest@internal"
+    # rhev_password: "Wiki@2051"
+    # vm_template: Sai1
+    # vm_cluster: Default
     max_retries: 30
     retry_delay: 10
 
