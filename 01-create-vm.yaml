@@ -12,7 +12,7 @@
     # vm_template: Sai1
     # vm_cluster: Default
     max_retries: 30
-    retry_delay: 30
+    retry_delay: 10
 
   tasks:
     - name: Opening RHEV Session
