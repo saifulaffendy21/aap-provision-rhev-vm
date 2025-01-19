@@ -31,7 +31,7 @@
         - name: Check if the VM already exists
           ovirt_vm_info:
             auth: "{{ ovirt_auth.ansible_facts.ovirt_auth }}"
-            pattern: name= "{{ vm_name }}"
+            pattern: "name={{ vm_name }}"
           register: vm_info
 
         - name: Debug VM info
@@ -57,7 +57,7 @@
             auth: "{{ ovirt_auth.ansible_facts.ovirt_auth }}"
             name: "{{ vm_name }}"
             state: running
-          when: vm_info.ovirt_vms | length > 0
+          # when: vm_info.ovirt_vms | length > 0
 
         - name: Verify the VM is UP
           ovirt_vm_info:
